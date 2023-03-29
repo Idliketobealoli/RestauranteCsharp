@@ -3,6 +3,6 @@
     internal interface ICamarero<T>
     {
         void TakePlatos();
-        void SendPlatos();
+        void SendPlatos(int Id);
     }
 }

@@ -24,8 +24,10 @@ namespace restauranteCsharp.restaurante.monitor
                 {
                     if (Instance == null)
                     {
-                        Instance = new Barra();
-                        Instance.PlatosPreparados = new Queue<Plato>();
+                        Instance = new()
+                        {
+                            PlatosPreparados = new Queue<Plato>()
+                        };
                     }
                 }
             }
@@ -43,7 +45,7 @@ namespace restauranteCsharp.restaurante.monitor
 
                 var plato = PlatosPreparados.Dequeue();
 
-                Console.WriteLine("El camarero: " + Environment.CurrentManagedThreadId + " ha recogido el plato: " + plato);
+                Console.WriteLine("Se ha recogido el plato: " + plato);
                 return plato;
             }
         }
@@ -58,7 +60,7 @@ namespace restauranteCsharp.restaurante.monitor
                 }
 
                 PlatosPreparados.Enqueue(entity);
-                Console.WriteLine("El cocinero: " + Environment.CurrentManagedThreadId + " ha preparado el plato: " + entity);
+                Console.WriteLine("Se ha preparado el plato: " + entity);
 
             }
         }
