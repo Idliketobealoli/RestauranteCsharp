@@ -8,7 +8,9 @@
  * Lo que pagan los clientes se guarda en un fichero "pagos.txt" y al finalizar los clientes, 
  * se calcula el total de dinero generado.
  */
-using System.Diagnostics;
+using restauranteCsharp.restaurante.consumers;
+using restauranteCsharp.restaurante.producers;
+using restauranteCsharp.restaurante.utils;
 
 namespace restauranteCsharp.restaurante
 {
@@ -16,39 +18,59 @@ namespace restauranteCsharp.restaurante
     {
         private static void Main()
         {
+            const int NUM_COCINEROS = 3;
+            const int NUM_CAMAREROS = 2;
+            CancellationTokenSource CancellationToken = new();
+
             Console.WriteLine("-- EMPEZANDO SERVICIO --");
-            LimpiezaTxt();
+            DirectoryManager dm = new();
+            dm.LimpiezaTxt();
+
+            List<Cocinero> Cocineros = new();
+            List<Camarero> Camareros = new();
+            List<Task> TasksCocineros = new();
+            List<Task> TasksCamareros = new();
+
+            var task1 = Task.Run(() =>
+            {
+                while (Cocineros.Count < NUM_COCINEROS)
+                {
+                    Cocineros.Add(new($"Cocinero {Cocineros.Count}"));
+                }
+            });
+            var task2 = Task.Run(() =>
+            {
+                while (Camareros.Count < NUM_CAMAREROS)
+                {
+                    Camareros.Add(new($"Camarero {Camareros.Count}"));
+                }
+            });
+
+            Task finished = Task.WhenAll(task1, task2);
+            finished.Wait();
+            Console.WriteLine("-- CAMAREROS Y COCINEROS INICIADOS --");
+
+            Cocineros.ForEach(cocinero =>
+            {
+                var t = Task.Run(() => { cocinero.Cocinar(); }, CancellationToken.Token);
+                TasksCocineros.Add(t);
+            });
+
+            Camareros.ForEach(camarero =>
+            {
+                var t = Task.Run(() => { camarero.TakePlatos(); });
+                TasksCamareros.Add(t);
+            });
+
+            Task.WaitAll(TasksCamareros.ToArray());
+            CancellationToken.Cancel();
+
+            var precios = dm.FilterLines();
+            var total = 0.0;
+            precios.ForEach(prec => total += prec);
+            Console.WriteLine($"-- Total de dinero generado: {Math.Round(total, 2)} --");
 
             Console.WriteLine("-- SERVICIO FINALIZADO --");
-        }
-
-        private static void LimpiezaTxt()
-        {
-            string d1 = AppDomain.CurrentDomain.BaseDirectory;
-            string parent = Directory.GetParent(d1).Parent.Parent.Parent.FullName;
-            string directory = $"{parent}{Path.DirectorySeparatorChar}data";
-            string path = $"{directory}{Path.DirectorySeparatorChar}pagos.txt";
-
-            //Console.WriteLine(path);
-            if (!Directory.Exists(directory))
-            {
-                Console.WriteLine("Creando directorio.");
-                Directory.CreateDirectory(directory);
-                Console.WriteLine("Directorio creado.");
-            }
-            if (!File.Exists(path))
-            {
-                Console.WriteLine($"Creando archivo.");
-                var f = File.Create(path);
-                f.Close();
-                Console.WriteLine("Archivo creado.");
-            }
-            
-            using (StreamWriter writer = new StreamWriter(path))
-            {
-                writer.WriteLine("");
-                writer.Close();
-            }
         }
     }
 }

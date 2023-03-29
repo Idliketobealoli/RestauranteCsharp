@@ -1,11 +1,7 @@
 ﻿using App.Metrics.Concurrency;
 using restauranteCsharp.restaurante.model;
 using restauranteCsharp.restaurante.monitor;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using restauranteCsharp.restaurante.utils;
 
 namespace restauranteCsharp.restaurante.consumers
 {
@@ -23,20 +19,26 @@ namespace restauranteCsharp.restaurante.consumers
         private static int pedidoId = 0;
 
         private readonly int Delay = new Random().Next(700, 1000);
+        private readonly DirectoryManager Dm = new();
 
-        public Camarero(string name) 
+        public Camarero(string name)
         {
             Id = NumeroCamareros.GetAndIncrement();
             Name = name;
             Barra = Barra.GetInstance();
-
-        }
+    }
 
 
         public void SendPlatos(int pedidoId)
         {
-            Console.WriteLine("\t -> Camarero: " + Name + " realiza el pedido: " + pedidoId);
-            PlatosEnManos.Clear();
+            Console.WriteLine("\t -> Camarero: " + Name + " prepara el pedido: " + pedidoId);
+            while (PlatosEnManos.Any())
+            {
+                var plato = PlatosEnManos.Dequeue();
+                var line = $"Camarero {Name} sirve plato {plato.Id} a la mesa {plato.Mesa} con precio: {plato.Precio}";
+                Dm.AppendText(line);
+            }
+            Console.WriteLine("\t -> Camarero: " + Name + " entregó el pedido: " + pedidoId);
         }
 
         public void TakePlatos()
@@ -46,14 +48,17 @@ namespace restauranteCsharp.restaurante.consumers
                 Thread.Sleep(Delay);
 
                 var plato = Barra.Get();
-                Console.WriteLine("\t -> Camarero: " + Name + " obtiene el plato: " + plato);
-
-                PlatosEnManos.Enqueue(plato);
-
-                if (PlatosEnManos.Count == 3)
+                if (plato != null)
                 {
-                    pedidoId++;
-                    SendPlatos(pedidoId);
+                    Console.WriteLine("\t -> Camarero: " + Name + " obtiene el plato: " + plato.ToString());
+
+                    PlatosEnManos.Enqueue(plato);
+
+                    if (PlatosEnManos.Count == 3)
+                    {
+                        pedidoId++;
+                        SendPlatos(pedidoId);
+                    }
                 }
             }
 

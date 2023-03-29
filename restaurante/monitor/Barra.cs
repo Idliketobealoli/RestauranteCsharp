@@ -1,9 +1,5 @@
 ﻿using restauranteCsharp.restaurante.model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace restauranteCsharp.restaurante.monitor
 {
@@ -14,7 +10,7 @@ namespace restauranteCsharp.restaurante.monitor
         private static readonly object Lock = new();
 
         private const int MAX = 10;
-        private Queue<Plato> PlatosPreparados { get; set; }
+        private ConcurrentQueue<Plato> PlatosPreparados { get; set; }
 
         public static Barra GetInstance()
         {
@@ -26,7 +22,7 @@ namespace restauranteCsharp.restaurante.monitor
                     {
                         Instance = new()
                         {
-                            PlatosPreparados = new Queue<Plato>()
+                            PlatosPreparados = new ConcurrentQueue<Plato>()
                         };
                     }
                 }
@@ -34,34 +30,31 @@ namespace restauranteCsharp.restaurante.monitor
             return Instance;
         }
 
-        public Plato Get()
+        public Plato? Get()
         {
+            while (!PlatosPreparados.Any())
+            {
+                Thread.Sleep(750);
+            }
             lock (this)
             {
-                while (!PlatosPreparados.Any())
-                {
-                    Thread.Sleep(500);
-                }
+                PlatosPreparados.TryDequeue(out Plato? plato);
 
-                var plato = PlatosPreparados.Dequeue();
-
-                Console.WriteLine("Se ha recogido el plato: " + plato);
+                if (plato != null) { Console.WriteLine("Se ha recogido el plato: " + plato); }
                 return plato;
             }
         }
 
         public void Put(Plato entity)
         {
+            while (PlatosPreparados.Count == MAX)
+            {
+                Thread.Sleep(750);
+            }
             lock (this)
             {
-                while (PlatosPreparados.Count == MAX)
-                {
-                    Thread.Sleep(750);
-                }
-
                 PlatosPreparados.Enqueue(entity);
                 Console.WriteLine("Se ha preparado el plato: " + entity);
-
             }
         }
     }
