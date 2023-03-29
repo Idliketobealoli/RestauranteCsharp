@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace restauranteCsharp.restaurante.monitor
 {
-    internal class Monitor
+    internal interface IMonitor<T>
     {
+        T Get();
+
+        void Put(T entity);
     }
 }
