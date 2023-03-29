@@ -31,12 +31,13 @@ namespace restauranteCsharp.restaurante.consumers
 
         public void SendPlatos(int pedidoId)
         {
-            Console.WriteLine("\t -> Camarero: " + Name + " prepara el pedido: " + pedidoId);
+            Console.WriteLine("\t -> " + Name + " prepara el pedido: " + pedidoId);
             while (PlatosEnManos.Any())
             {
                 var plato = PlatosEnManos.Dequeue();
-                var line = $"Camarero {Name} sirve plato {plato.Id} a la mesa {plato.Mesa} con precio: {plato.Precio}";
+                var line = $"{Name} sirve plato {plato.Id} a la mesa {plato.Mesa} con precio: {plato.Precio}";
                 Dm.AppendText(line);
+                Dm.AppendInCSV(new string[] {$"{Name}", $"{plato.Id}", $"{plato.Mesa}", $"{plato.Precio}"});
             }
             Console.WriteLine("\t -> Camarero: " + Name + " entregó el pedido: " + pedidoId);
         }
