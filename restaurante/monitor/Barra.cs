@@ -1,47 +1,60 @@
 ﻿using restauranteCsharp.restaurante.model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace restauranteCsharp.restaurante.monitor
 {
     internal class Barra : IMonitor<Plato>
     {
-        const int MAX = 10;
+        private Barra() { }
+        private static Barra Instance;
+        private static readonly object Lock = new();
 
-        Queue<Plato> PlatosPreparados = new();
+        private const int MAX = 10;
+        private ConcurrentQueue<Plato> PlatosPreparados { get; set; }
 
-
-        public Plato Get()
+        public static Barra GetInstance()
         {
+            if (Instance == null)
+            {
+                lock (Lock)
+                {
+                    if (Instance == null)
+                    {
+                        Instance = new()
+                        {
+                            PlatosPreparados = new ConcurrentQueue<Plato>()
+                        };
+                    }
+                }
+            }
+            return Instance;
+        }
+
+        public Plato? Get()
+        {
+            while (!PlatosPreparados.Any())
+            {
+                Thread.Sleep(750);
+            }
             lock (this)
             {
-                while (!PlatosPreparados.Any())
-                {
-                    Thread.Sleep(500);
-                }
+                PlatosPreparados.TryDequeue(out Plato? plato);
 
-                var plato = PlatosPreparados.Dequeue();
-
-                Console.WriteLine("El camarero: " + Environment.CurrentManagedThreadId + " ha recogido el plato: " + plato);
+                if (plato != null) { Console.WriteLine("Se ha recogido el plato: " + plato); }
                 return plato;
             }
         }
 
         public void Put(Plato entity)
         {
+            while (PlatosPreparados.Count == MAX)
+            {
+                Thread.Sleep(750);
+            }
             lock (this)
             {
-                while (PlatosPreparados.Count == MAX)
-                {
-                    Thread.Sleep(750);
-                }
-
-                PlatosPreparados.Enqueue(entity);                
-                Console.WriteLine("El cocinero: " + Environment.CurrentManagedThreadId + " ha preparado el plato: " + entity);
-
+                PlatosPreparados.Enqueue(entity);
+                Console.WriteLine("Se ha preparado el plato: " + entity);
             }
         }
     }
