@@ -9,8 +9,8 @@ namespace restauranteCsharp.restaurante.producers
         private static AtomicInteger NumeroCocineros = new(0);
         public int Id;
         public string Name;
-        private Barra Barra;
-        private int Delay = new Random().Next(1000, 1500);
+        private readonly Barra Barra;
+        private readonly int Delay = new Random().Next(1000, 1500);
 
         public Cocinero(string name)
         {
@@ -23,9 +23,11 @@ namespace restauranteCsharp.restaurante.producers
         {
             while (true)
             {
+                Thread.Sleep(Delay);
                 Plato Plato = new();
                 Barra.Put(Plato);
-                Thread.Sleep(Delay);
+
+                Console.WriteLine("\t-> Cocinero: " + Name + " ha preparado el plato: " + Plato);
             }
         }
     }
