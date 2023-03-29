@@ -9,12 +9,20 @@ namespace restauranteCsharp.restaurante.model
         public int Mesa { get; set; }
         public double Precio { get; set; }
         public Tipo TipoPlato { get; set; }
-        public Plato(int mesa, double precio, Tipo tipo)
+        public Plato()
         {
             Id = NumeroPlatos.GetAndAdd(1);
-            Mesa = mesa;
-            Precio = precio;
-            TipoPlato = tipo;
+            Mesa = new Random().Next(1, 10);
+            Precio = new Random().NextDouble()*(25.5-10.0)+10.0;
+            TipoPlato = GenerateTipo();
+        }
+
+        private static Tipo GenerateTipo()
+        {
+            var tipoNum = new Random().Next(1, 3);
+            if (tipoNum == 1) return Tipo.PRIMERO;
+            else if (tipoNum == 2) return Tipo.SEGUNDO;
+            else return Tipo.POSTRE;
         }
     }
 

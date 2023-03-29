@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace restauranteCsharp.restaurante.producers
 {
-    internal interface ICocinero
+    internal interface ICocinero<T>
     {
+        void Cocinar();
     }
 }

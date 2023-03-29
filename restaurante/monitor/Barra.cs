@@ -9,10 +9,28 @@ namespace restauranteCsharp.restaurante.monitor
 {
     internal class Barra : IMonitor<Plato>
     {
-        const int MAX = 10;
+        private Barra() { }
+        private static Barra Instance;
+        private static readonly object Lock = new();
 
-        Queue<Plato> PlatosPreparados = new();
+        private const int MAX = 10;
+        private Queue<Plato> PlatosPreparados { get; set; }
 
+        public static Barra GetInstance()
+        {
+            if (Instance == null)
+            {
+                lock (Lock)
+                {
+                    if (Instance == null)
+                    {
+                        Instance = new Barra();
+                        Instance.PlatosPreparados = new Queue<Plato>();
+                    }
+                }
+            }
+            return Instance;
+        }
 
         public Plato Get()
         {
@@ -39,7 +57,7 @@ namespace restauranteCsharp.restaurante.monitor
                     Thread.Sleep(750);
                 }
 
-                PlatosPreparados.Enqueue(entity);                
+                PlatosPreparados.Enqueue(entity);
                 Console.WriteLine("El cocinero: " + Environment.CurrentManagedThreadId + " ha preparado el plato: " + entity);
 
             }
