@@ -4,16 +4,17 @@ namespace restauranteCsharp.restaurante.model
 {
     internal class Plato
     {
-        private AtomicInteger NumeroPlatos = 0;
+        private static AtomicInteger NumeroPlatos = new(0);
         public int Id { get; set; }
         public int Mesa { get; set; }
         public double Precio { get; set; }
         public Tipo TipoPlato { get; set; }
-        public Plato(int mesa, double precio, Tipo tipo) 
+        public Plato(int mesa, double precio, Tipo tipo)
         {
-            Id = NumeroPlatos;
-            NumeroPlatos++;
-
+            Id = NumeroPlatos.GetAndAdd(1);
+            Mesa = mesa;
+            Precio = precio;
+            TipoPlato = tipo;
         }
     }
 

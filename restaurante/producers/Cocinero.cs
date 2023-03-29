@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using App.Metrics.Concurrency;
 
 namespace restauranteCsharp.restaurante.producers
 {
     internal class Cocinero
     {
+        private static AtomicInteger NumeroCocineros = new(0);
+        public int Id;
+        public string Name;
+
     }
 }
