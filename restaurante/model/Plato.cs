@@ -20,9 +20,13 @@ namespace restauranteCsharp.restaurante.model
         private static Tipo GenerateTipo()
         {
             var tipoNum = new Random().Next(1, 4);
-            if (tipoNum == 1) return Tipo.PRIMERO;
-            else if (tipoNum == 2) return Tipo.SEGUNDO;
-            else return Tipo.POSTRE;
+            switch (tipoNum)
+            {
+                case 1: return Tipo.PRIMERO;
+                case 2: return Tipo.SEGUNDO;
+                case 3: return Tipo.POSTRE;
+                default: return Tipo.PRIMERO;
+            }
         }
 
         public override string ToString()

@@ -2,39 +2,74 @@
 {
     internal class DirectoryManager
     {
-        public void LimpiezaTxt()
+        //private TimeSpan Timeout = TimeSpan.FromMilliseconds(500);
+        private static Mutex MutexTXT = new();
+        private static Mutex MutexCSV = new();
+        public void LimpiezaDataAsync()
         {
-            var path = GetFile();
-            using (StreamWriter writer = new StreamWriter(path, false))
+            var pathTxt = GetFileTxt();
+
+            MutexTXT.WaitOne();
+            using (StreamWriter writer = new(pathTxt, false))
             {
-                writer.WriteLine("");
                 writer.Close();
             }
+            MutexTXT.ReleaseMutex();
+
+            var pathCsv = GetFileCsv();
+
+            MutexCSV.WaitOne();
+            using (StreamWriter writer = new(pathCsv, false))
+            {
+                writer.WriteLine(PrepareCsv());
+                writer.Close();
+            }
+            MutexCSV.ReleaseMutex();
+            PrepareCsv();
         }
 
+        // el \r\n esta puesto asi para que luego el texto no de fallo de formato de salto de linea.
         public void AppendText(string text)
         {
-            var path = GetFile();
-            using (StreamWriter writer = new StreamWriter(path, true))
-            {
-                writer.WriteLine(text);
-                writer.Close();
-            }
+            var path = GetFileTxt();
+
+            MutexTXT.WaitOne();
+            File.AppendAllText(path, text + "\r\n");
+            MutexTXT.ReleaseMutex();
         }
 
-        public List<double> FilterLines()
+        public void AppendInCSV(string[] info)
         {
-            var path = GetFile();
+            string separator = ";";
+            var path = GetFileCsv();
+
+            MutexCSV.WaitOne();
+            File.AppendAllText(path, string.Join(separator, info) + "\r\n");
+            MutexCSV.ReleaseMutex();
+        }
+
+        public string PrepareCsv()
+        {
+            string separator = ";";
+            string[] headings = { "Camarero", "Plato", "Mesa", "Precio" };
+            return string.Join(separator, headings);
+        }
+
+        public List<double> FilterLinesAsync()
+        {
+            var path = GetFileTxt();
             List<string> lines;
             List<double> res = new();
             try
             {
+                MutexTXT.WaitOne();
                 lines = File.ReadLines(path).ToList();
+                MutexTXT.ReleaseMutex();
                 lines.ForEach(line =>
                 {
                     var value = line.Split(":").LastOrDefault();
                     double num;
-                    if (value != null && Double.TryParse(value.Trim(), out num))
+                    if (value != null && double.TryParse(value.Trim(), out num))
                     {
                         res.Add(num);
                     }
@@ -49,14 +84,14 @@
             }
         }
 
-        public string GetFile()
+        public string GetFileTxt()
         {
             string d1 = AppDomain.CurrentDomain.BaseDirectory;
             string parent = Directory.GetParent(d1).Parent.Parent.Parent.FullName;
             string directory = $"{parent}{Path.DirectorySeparatorChar}data";
             string path = $"{directory}{Path.DirectorySeparatorChar}pagos.txt";
 
-            //Console.WriteLine(path);
+            MutexTXT.WaitOne();
             if (!Directory.Exists(directory))
             {
                 Console.WriteLine("Creando directorio.");
@@ -70,6 +105,25 @@
                 f.Close();
                 Console.WriteLine("Archivo creado.");
             }
+            MutexTXT.ReleaseMutex();
+            return path;
+        }
+        public string GetFileCsv()
+        {
+            string d1 = AppDomain.CurrentDomain.BaseDirectory;
+            string parent = Directory.GetParent(d1).Parent.Parent.Parent.FullName;
+            string directory = $"{parent}{Path.DirectorySeparatorChar}data";
+            string path = $"{directory}{Path.DirectorySeparatorChar}pagos.csv";
+
+            MutexCSV.WaitOne();
+            if (!File.Exists(path))
+            {
+                Console.WriteLine($"Creando archivo.");
+                var f = File.Create(path);
+                f.Close();
+                Console.WriteLine("Archivo creado.");
+            }
+            MutexCSV.ReleaseMutex();
             return path;
         }
     }

@@ -11,6 +11,7 @@
 using restauranteCsharp.restaurante.consumers;
 using restauranteCsharp.restaurante.producers;
 using restauranteCsharp.restaurante.utils;
+using System.Diagnostics;
 
 namespace restauranteCsharp.restaurante
 {
@@ -20,11 +21,15 @@ namespace restauranteCsharp.restaurante
         {
             const int NUM_COCINEROS = 3;
             const int NUM_CAMAREROS = 2;
+
+            Stopwatch stopwatch = new Stopwatch();
             CancellationTokenSource CancellationToken = new();
+
+            stopwatch.Start();
 
             Console.WriteLine("-- EMPEZANDO SERVICIO --");
             DirectoryManager dm = new();
-            dm.LimpiezaTxt();
+            dm.LimpiezaDataAsync();
 
             List<Cocinero> Cocineros = new();
             List<Camarero> Camareros = new();
@@ -65,10 +70,14 @@ namespace restauranteCsharp.restaurante
             Task.WaitAll(TasksCamareros.ToArray());
             CancellationToken.Cancel();
 
-            var precios = dm.FilterLines();
+            var precios = dm.FilterLinesAsync();
             var total = 0.0;
             precios.ForEach(prec => total += prec);
+
+            stopwatch.Stop();
+
             Console.WriteLine($"-- Total de dinero generado: {Math.Round(total, 2)} --");
+            Console.WriteLine($"-- Tiempo de ejecución: {stopwatch.ElapsedMilliseconds} ms --");
 
             Console.WriteLine("-- SERVICIO FINALIZADO --");
         }
