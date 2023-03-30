@@ -1,96 +1,51 @@
-﻿using restauranteCsharp.restaurante.model;
-using System.Text;
-
-namespace restauranteCsharp.restaurante.utils
+﻿namespace restauranteCsharp.restaurante.utils
 {
     internal class DirectoryManager
     {
-        private TimeSpan Timeout = TimeSpan.FromMilliseconds(500);
-        public void LimpiezaData()
+        //private TimeSpan Timeout = TimeSpan.FromMilliseconds(500);
+        private static Mutex MutexTXT = new();
+        private static Mutex MutexCSV = new();
+        public void LimpiezaDataAsync()
         {
             var pathTxt = GetFileTxt();
+
+            MutexTXT.WaitOne();
             using (StreamWriter writer = new(pathTxt, false))
             {
                 writer.Close();
             }
+            MutexTXT.ReleaseMutex();
 
             var pathCsv = GetFileCsv();
+
+            MutexCSV.WaitOne();
             using (StreamWriter writer = new(pathCsv, false))
             {
                 writer.WriteLine(PrepareCsv());
                 writer.Close();
             }
-
+            MutexCSV.ReleaseMutex();
             PrepareCsv();
         }
 
+        // el \r\n esta puesto asi para que luego el texto no de fallo de formato de salto de linea.
         public void AppendText(string text)
         {
             var path = GetFileTxt();
-            bool lockTXTTaken = false;
-            object lockTXT = new object();
-            try
-            {
-                Monitor.TryEnter(lockTXT, Timeout, ref lockTXTTaken);
-                if (lockTXTTaken)
-                {
-                    using (StreamWriter writer = new(path, true))
-                    {
-                        writer.WriteLineAsync(text);
-                        writer.Close();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"Lock not acquired by {Thread.CurrentThread.Name}.");
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-            finally
-            {
-                if (lockTXTTaken)
-                {
-                    Monitor.Exit(lockTXT);
-                }
-            }
+
+            MutexTXT.WaitOne();
+            File.AppendAllText(path, text + "\r\n");
+            MutexTXT.ReleaseMutex();
         }
 
         public void AppendInCSV(string[] info)
         {
             string separator = ";";
             var path = GetFileCsv();
-            bool lockCSVTaken = false;
-            object lockCSV = new object();
-            try
-            {
-                Monitor.TryEnter(lockCSV, Timeout, ref lockCSVTaken);
-                if (lockCSVTaken)
-                {
-                    using (StreamWriter writer = new(path, true))
-                    {
-                        writer.WriteLineAsync(string.Join(separator, info));
-                        writer.Close();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"Lock not acquired by {Thread.CurrentThread.Name}.");
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-            finally
-            {
-                if (lockCSVTaken)
-                {
-                    Monitor.Exit(lockCSV);
-                }
-            }
+
+            MutexCSV.WaitOne();
+            File.AppendAllText(path, string.Join(separator, info) + "\r\n");
+            MutexCSV.ReleaseMutex();
         }
 
         public string PrepareCsv()
@@ -100,14 +55,16 @@ namespace restauranteCsharp.restaurante.utils
             return string.Join(separator, headings);
         }
 
-        public List<double> FilterLines()
+        public List<double> FilterLinesAsync()
         {
             var path = GetFileTxt();
             List<string> lines;
             List<double> res = new();
             try
             {
+                MutexTXT.WaitOne();
                 lines = File.ReadLines(path).ToList();
+                MutexTXT.ReleaseMutex();
                 lines.ForEach(line =>
                 {
                     var value = line.Split(":").LastOrDefault();
@@ -134,6 +91,7 @@ namespace restauranteCsharp.restaurante.utils
             string directory = $"{parent}{Path.DirectorySeparatorChar}data";
             string path = $"{directory}{Path.DirectorySeparatorChar}pagos.txt";
 
+            MutexTXT.WaitOne();
             if (!Directory.Exists(directory))
             {
                 Console.WriteLine("Creando directorio.");
@@ -147,6 +105,7 @@ namespace restauranteCsharp.restaurante.utils
                 f.Close();
                 Console.WriteLine("Archivo creado.");
             }
+            MutexTXT.ReleaseMutex();
             return path;
         }
         public string GetFileCsv()
@@ -156,6 +115,7 @@ namespace restauranteCsharp.restaurante.utils
             string directory = $"{parent}{Path.DirectorySeparatorChar}data";
             string path = $"{directory}{Path.DirectorySeparatorChar}pagos.csv";
 
+            MutexCSV.WaitOne();
             if (!File.Exists(path))
             {
                 Console.WriteLine($"Creando archivo.");
@@ -163,6 +123,7 @@ namespace restauranteCsharp.restaurante.utils
                 f.Close();
                 Console.WriteLine("Archivo creado.");
             }
+            MutexCSV.ReleaseMutex();
             return path;
         }
     }

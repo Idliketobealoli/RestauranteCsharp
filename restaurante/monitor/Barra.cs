@@ -7,7 +7,7 @@ namespace restauranteCsharp.restaurante.monitor
     {
         private Barra() { }
         private static Barra Instance;
-        private static readonly object Lock = new();
+        private static Mutex Mutex = new();
 
         private const int MAX = 10;
         private ConcurrentQueue<Plato> PlatosPreparados { get; set; }
@@ -16,16 +16,15 @@ namespace restauranteCsharp.restaurante.monitor
         {
             if (Instance == null)
             {
-                lock (Lock)
+                Mutex.WaitOne();
+                if (Instance == null)
                 {
-                    if (Instance == null)
+                    Instance = new()
                     {
-                        Instance = new()
-                        {
-                            PlatosPreparados = new ConcurrentQueue<Plato>()
-                        };
-                    }
+                        PlatosPreparados = new ConcurrentQueue<Plato>()
+                    };
                 }
+                Mutex.ReleaseMutex();
             }
             return Instance;
         }

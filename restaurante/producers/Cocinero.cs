@@ -10,7 +10,6 @@ namespace restauranteCsharp.restaurante.producers
         public int Id;
         public string Name;
         private readonly Barra Barra;
-        private readonly int Delay = new Random().Next(100, 300);
 
         public Cocinero(string name)
         {
@@ -23,7 +22,8 @@ namespace restauranteCsharp.restaurante.producers
         {
             while (true)
             {
-                Thread.Sleep(Delay);
+                Thread.Sleep(new Random().Next(1000, 1500));
+
                 Plato Plato = new();
                 Barra.Put(Plato);
 

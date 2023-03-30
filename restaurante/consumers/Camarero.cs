@@ -8,17 +8,15 @@ namespace restauranteCsharp.restaurante.consumers
     internal class Camarero : ICamarero<Plato>
     {
 
-        private const int MAX_PEDIDOS = 100;
+        private const int MAX_PEDIDOS = 5;
 
         private static AtomicInteger NumeroCamareros = new(0);
         public int Id;
         public string Name;
         private readonly Barra Barra;
 
-        private readonly Queue<Plato> PlatosEnManos = new();
-        private static int pedidoId = 0;
+        private readonly Queue<Plato> PlatosEnManos;
 
-        private readonly int Delay = new Random().Next(100, 300);
         private readonly DirectoryManager Dm = new();
 
         public Camarero(string name)
@@ -26,6 +24,7 @@ namespace restauranteCsharp.restaurante.consumers
             Id = NumeroCamareros.GetAndIncrement();
             Name = name;
             Barra = Barra.GetInstance();
+            PlatosEnManos = new();
     }
 
 
@@ -34,6 +33,8 @@ namespace restauranteCsharp.restaurante.consumers
             Console.WriteLine("\t -> " + Name + " prepara el pedido: " + pedidoId);
             while (PlatosEnManos.Any())
             {
+                Thread.Sleep(new Random().Next(500, 800));
+
                 var plato = PlatosEnManos.Dequeue();
                 var line = $"{Name} sirve plato {plato.Id} a la mesa {plato.Mesa} con precio: {plato.Precio}";
                 Dm.AppendText(line);
@@ -44,9 +45,10 @@ namespace restauranteCsharp.restaurante.consumers
 
         public void TakePlatos()
         {
-
+            int pedidoId = 0;
             while (pedidoId < MAX_PEDIDOS) {
-                Thread.Sleep(Delay);
+
+                Thread.Sleep(new Random().Next(700, 1200));
 
                 var plato = Barra.Get();
                 if (plato != null)

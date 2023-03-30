@@ -29,7 +29,7 @@ namespace restauranteCsharp.restaurante
 
             Console.WriteLine("-- EMPEZANDO SERVICIO --");
             DirectoryManager dm = new();
-            dm.LimpiezaData();
+            dm.LimpiezaDataAsync();
 
             List<Cocinero> Cocineros = new();
             List<Camarero> Camareros = new();
@@ -70,7 +70,7 @@ namespace restauranteCsharp.restaurante
             Task.WaitAll(TasksCamareros.ToArray());
             CancellationToken.Cancel();
 
-            var precios = dm.FilterLines();
+            var precios = dm.FilterLinesAsync();
             var total = 0.0;
             precios.ForEach(prec => total += prec);
 
