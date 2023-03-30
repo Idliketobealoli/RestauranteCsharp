@@ -5,6 +5,7 @@ namespace restauranteCsharp.restaurante.utils
 {
     internal class DirectoryManager
     {
+        private TimeSpan Timeout = TimeSpan.FromMilliseconds(500);
         public void LimpiezaData()
         {
             var pathTxt = GetFileTxt();
@@ -26,29 +27,76 @@ namespace restauranteCsharp.restaurante.utils
         public void AppendText(string text)
         {
             var path = GetFileTxt();
-            using (StreamWriter writer = new(path, true))
+            bool lockTXTTaken = false;
+            object lockTXT = new object();
+            try
             {
-                writer.WriteLine(text);
-                writer.Close();
+                Monitor.TryEnter(lockTXT, Timeout, ref lockTXTTaken);
+                if (lockTXTTaken)
+                {
+                    using (StreamWriter writer = new(path, true))
+                    {
+                        writer.WriteLineAsync(text);
+                        writer.Close();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Lock not acquired by {Thread.CurrentThread.Name}.");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            finally
+            {
+                if (lockTXTTaken)
+                {
+                    Monitor.Exit(lockTXT);
+                }
             }
         }
 
         public void AppendInCSV(string[] info)
         {
-            String separator = ";";
+            string separator = ";";
             var path = GetFileCsv();
-            using (StreamWriter writer = new(path, true))
+            bool lockCSVTaken = false;
+            object lockCSV = new object();
+            try
             {
-                writer.WriteLine(string.Join(separator, info));
-                writer.Close();
+                Monitor.TryEnter(lockCSV, Timeout, ref lockCSVTaken);
+                if (lockCSVTaken)
+                {
+                    using (StreamWriter writer = new(path, true))
+                    {
+                        writer.WriteLineAsync(string.Join(separator, info));
+                        writer.Close();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Lock not acquired by {Thread.CurrentThread.Name}.");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            finally
+            {
+                if (lockCSVTaken)
+                {
+                    Monitor.Exit(lockCSV);
+                }
             }
         }
 
         public string PrepareCsv()
         {
-            String separator = ";";
-            String[] headings = { "Camarero", "Plato", "Mesa", "Precio" };
-            StringBuilder output = new();
+            string separator = ";";
+            string[] headings = { "Camarero", "Plato", "Mesa", "Precio" };
             return string.Join(separator, headings);
         }
 
@@ -64,7 +112,7 @@ namespace restauranteCsharp.restaurante.utils
                 {
                     var value = line.Split(":").LastOrDefault();
                     double num;
-                    if (value != null && Double.TryParse(value.Trim(), out num))
+                    if (value != null && double.TryParse(value.Trim(), out num))
                     {
                         res.Add(num);
                     }
@@ -86,7 +134,6 @@ namespace restauranteCsharp.restaurante.utils
             string directory = $"{parent}{Path.DirectorySeparatorChar}data";
             string path = $"{directory}{Path.DirectorySeparatorChar}pagos.txt";
 
-            //Console.WriteLine(path);
             if (!Directory.Exists(directory))
             {
                 Console.WriteLine("Creando directorio.");
@@ -109,7 +156,6 @@ namespace restauranteCsharp.restaurante.utils
             string directory = $"{parent}{Path.DirectorySeparatorChar}data";
             string path = $"{directory}{Path.DirectorySeparatorChar}pagos.csv";
 
-            //Console.WriteLine(path);
             if (!File.Exists(path))
             {
                 Console.WriteLine($"Creando archivo.");

@@ -8,7 +8,7 @@ namespace restauranteCsharp.restaurante.consumers
     internal class Camarero : ICamarero<Plato>
     {
 
-        private const int MAX_PEDIDOS = 10;
+        private const int MAX_PEDIDOS = 100;
 
         private static AtomicInteger NumeroCamareros = new(0);
         public int Id;
@@ -18,7 +18,7 @@ namespace restauranteCsharp.restaurante.consumers
         private readonly Queue<Plato> PlatosEnManos = new();
         private static int pedidoId = 0;
 
-        private readonly int Delay = new Random().Next(700, 1000);
+        private readonly int Delay = new Random().Next(100, 300);
         private readonly DirectoryManager Dm = new();
 
         public Camarero(string name)

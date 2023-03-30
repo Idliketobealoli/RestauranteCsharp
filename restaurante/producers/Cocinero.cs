@@ -10,7 +10,7 @@ namespace restauranteCsharp.restaurante.producers
         public int Id;
         public string Name;
         private readonly Barra Barra;
-        private readonly int Delay = new Random().Next(1000, 1500);
+        private readonly int Delay = new Random().Next(100, 300);
 
         public Cocinero(string name)
         {
